@@ -1,323 +1,451 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>🎣 Reel Ranks</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Exo+2:wght@300;400;500;700&display=swap" rel="stylesheet" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reel Ranks</title>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { min-height: 100vh; }
-body { font-family: 'Exo 2', sans-serif; background: #060f1e; color: #c8e8f8; padding: 1.5rem 1rem 3rem; }
-body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 0%, rgba(20,80,140,0.3) 0%, transparent 70%); pointer-events: none; z-index: 0; }
-.wrap { max-width: 980px; margin: 0 auto; position: relative; z-index: 1; }
-.app-title { font-family: 'Orbitron', monospace; text-align: center; font-size: 26px; color: #60c8f5; letter-spacing: 4px; margin-bottom: 4px; }
-.app-sub { text-align: center; font-size: 12px; color: #5a9ab8; letter-spacing: 2px; margin-bottom: 0.4rem; }
-.status-bar { text-align: center; font-size: 11px; margin-bottom: 1.4rem; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
-.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #555; margin-right: 5px; vertical-align: middle; transition: background 0.3s; }
-.status-dot.connected { background: #3dcf8c; box-shadow: 0 0 6px #3dcf8c; }
-.save-indicator { font-size: 11px; color: #3dcf8c; opacity: 0; transition: opacity 0.4s; }
-.save-indicator.show { opacity: 1; }
-.reset-btn { font-size: 11px; background: transparent; border: 1px solid #3a2a1a; color: #8a5a3a; border-radius: 6px; padding: 3px 10px; cursor: pointer; font-family: 'Exo 2', sans-serif; transition: all 0.15s; }
-.reset-btn:hover { border-color: #f09060; color: #f09060; }
-.players-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1.4rem; }
-.player-card { background: linear-gradient(160deg, #0a2a4a 0%, #0d1f35 100%); border: 1.5px solid #1e5a8a; border-radius: 16px; padding: 1.2rem; position: relative; }
-.player-card.rank-up { animation: flashGlow 0.8s ease; }
-@keyframes flashGlow { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 24px #60c8f5} }
-.player-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.fish-anim { font-size: 22px; animation: swim 3s ease-in-out infinite; display: inline-block; }
-@keyframes swim { 0%,100%{transform:translateX(0)} 50%{transform:translateX(5px)} }
-.player-name-input { font-family: 'Orbitron', monospace; font-size: 13px; background: transparent; border: none; border-bottom: 1px solid #1e5a8a; color: #e0f4ff; width: 100%; outline: none; padding: 3px 0; }
-.player-name-input::placeholder { color: #3a7aaa; font-size: 11px; }
-.rank-badge { text-align: center; margin: 10px 0 6px; }
-.rank-icon { font-size: 42px; line-height: 1; display: block; margin: 4px 0; }
-.rank-tier { font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 700; letter-spacing: 1px; }
-.rank-stars { font-size: 14px; margin-top: 3px; color: #ffd700; letter-spacing: 3px; }
-.points-display { font-family: 'Orbitron', monospace; font-size: 24px; font-weight: 700; text-align: center; color: #60c8f5; margin: 10px 0 2px; }
-.points-sub { font-size: 10px; color: #5a9ab8; text-align: center; letter-spacing: 1px; margin-bottom: 8px; }
-.progress-section { margin: 8px 0 12px; }
-.progress-label { display: flex; justify-content: space-between; font-size: 11px; color: #7ab8d8; margin-bottom: 4px; }
-.progress-bar-bg { background: #0a1e35; border-radius: 6px; height: 9px; overflow: hidden; border: 0.5px solid #1e5a8a; }
-.progress-bar-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; }
-.controls { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-.pts-btn { background: #0d2a45; border: 1px solid #1e5a8a; color: #a0d4f0; border-radius: 9px; padding: 9px 4px; font-size: 13px; font-family: 'Exo 2', sans-serif; cursor: pointer; transition: all 0.15s; font-weight: 500; }
-.pts-btn:hover { background: #1a4a70; border-color: #60c8f5; color: #fff; }
-.pts-btn:active { transform: scale(0.96); }
-.pts-btn.minus { border-color: #8a3a1a; color: #f09060; }
-.pts-btn.minus:hover { background: #4a1a0a; border-color: #f09060; }
-.pts-btn.wide { grid-column: span 2; background: #0a3a5a; border-color: #2a7aaa; }
-.pts-btn.wide:hover { background: #1a5a80; }
-.manual-row { margin-top: 10px; display: flex; gap: 6px; }
-.manual-input { flex: 1; background: #0a1e35; border: 1px solid #1e5a8a; color: #e0f4ff; border-radius: 9px; padding: 8px 10px; font-size: 13px; font-family: 'Exo 2', sans-serif; outline: none; }
-.manual-input:focus { border-color: #60c8f5; }
-.manual-btn { background: #0d3a5a; border: 1px solid #2a7aaa; color: #60c8f5; border-radius: 9px; padding: 8px 14px; font-size: 12px; cursor: pointer; font-family: 'Exo 2', sans-serif; white-space: nowrap; font-weight: 600; }
-.manual-btn:hover { background: #1a5a80; }
-.remove-btn { position: absolute; top: 10px; right: 12px; background: transparent; border: none; color: #2a4a6a; font-size: 18px; cursor: pointer; line-height: 1; padding: 2px 4px; transition: color 0.15s; }
-.remove-btn:hover { color: #f09060; }
-.add-card { background: transparent; border: 1.5px dashed #1e5a8a; border-radius: 16px; color: #3a7aaa; font-family: 'Exo 2', sans-serif; font-size: 15px; padding: 3rem 1rem; cursor: pointer; width: 100%; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.add-card:hover { border-color: #60c8f5; color: #60c8f5; background: rgba(96,200,245,0.04); }
-.add-card .add-fish { font-size: 30px; }
-.wave { text-align: center; color: #1e4a6a; font-size: 20px; letter-spacing: 6px; margin: 12px 0; }
-.leaderboard { background: #0a1e35; border: 1px solid #1e4a6a; border-radius: 14px; padding: 1.2rem; }
-.lb-title { font-family: 'Orbitron', monospace; font-size: 13px; color: #60c8f5; letter-spacing: 2px; margin-bottom: 12px; text-align: center; }
-.lb-row { display: flex; align-items: center; gap: 10px; padding: 9px 6px; border-bottom: 0.5px solid #1a3a5a; }
-.lb-row:last-child { border-bottom: none; }
-.lb-pos { font-family: 'Orbitron', monospace; font-size: 14px; width: 28px; color: #5a9ab8; }
-.lb-fish { font-size: 18px; }
-.lb-name { flex: 1; font-size: 14px; color: #c0e0f5; font-weight: 500; }
-.lb-rank { font-size: 11px; color: #7ab8d8; flex: 1; }
-.lb-pts { font-family: 'Orbitron', monospace; font-size: 14px; color: #60c8f5; font-weight: 700; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Arial, sans-serif;
+    background: #060f1e;
+    color: #c8e8f8;
+    min-height: 100vh;
+    padding: 20px 16px 60px;
+  }
+  h1 {
+    text-align: center;
+    font-size: 24px;
+    color: #60c8f5;
+    letter-spacing: 4px;
+    margin-bottom: 4px;
+  }
+  .sub {
+    text-align: center;
+    font-size: 12px;
+    color: #5a9ab8;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+  }
+  .top-bar {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .reset-btn {
+    background: transparent;
+    border: 1px solid #5a3a1a;
+    color: #8a5a3a;
+    border-radius: 6px;
+    padding: 5px 14px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .reset-btn:hover { border-color: #f09060; color: #f09060; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: linear-gradient(160deg, #0a2a4a, #0d1f35);
+    border: 2px solid #1e5a8a;
+    border-radius: 16px;
+    padding: 18px;
+    position: relative;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .fish { font-size: 22px; }
+  .name-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #1e5a8a;
+    color: #e0f4ff;
+    font-size: 14px;
+    outline: none;
+    padding: 3px 0;
+  }
+  .name-input::placeholder { color: #3a7aaa; }
+  .rank-area { text-align: center; margin: 10px 0; }
+  .rank-emoji { font-size: 44px; display: block; margin-bottom: 4px; }
+  .rank-name { font-size: 17px; font-weight: bold; }
+  .rank-stars { font-size: 15px; color: #ffd700; margin-top: 3px; letter-spacing: 3px; }
+  .pts-number { font-size: 26px; font-weight: bold; text-align: center; color: #60c8f5; margin: 10px 0 2px; }
+  .pts-label { font-size: 10px; color: #5a9ab8; text-align: center; letter-spacing: 1px; margin-bottom: 10px; }
+  .prog-label { display: flex; justify-content: space-between; font-size: 11px; color: #7ab8d8; margin-bottom: 4px; }
+  .prog-bg { background: #0a1e35; border-radius: 6px; height: 9px; border: 1px solid #1e5a8a; overflow: hidden; margin-bottom: 14px; }
+  .prog-fill { height: 100%; border-radius: 6px; transition: width 0.3s; }
+  .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .btn {
+    background: #0d2a45;
+    border: 1px solid #1e5a8a;
+    color: #a0d4f0;
+    border-radius: 9px;
+    padding: 10px 4px;
+    font-size: 13px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.1s;
+  }
+  .btn:hover { background: #1a4a70; }
+  .btn:active { opacity: 0.7; }
+  .btn.red { border-color: #8a3a1a; color: #f09060; }
+  .btn.red:hover { background: #3a1a0a; }
+  .btn.wide { grid-column: span 2; background: #0a3a5a; border-color: #2a7aaa; }
+  .btn.wide:hover { background: #1a5a80; }
+  .exact-row { display: flex; gap: 8px; margin-top: 10px; }
+  .exact-input {
+    flex: 1;
+    background: #0a1e35;
+    border: 1px solid #1e5a8a;
+    color: #e0f4ff;
+    border-radius: 9px;
+    padding: 8px 10px;
+    font-size: 13px;
+    outline: none;
+  }
+  .exact-btn {
+    background: #0d3a5a;
+    border: 1px solid #2a7aaa;
+    color: #60c8f5;
+    border-radius: 9px;
+    padding: 8px 14px;
+    font-size: 12px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .exact-btn:hover { background: #1a5a80; }
+  .del-btn {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: #2a4a6a;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .del-btn:hover { color: #f09060; }
+  .add-card {
+    background: transparent;
+    border: 2px dashed #1e5a8a;
+    border-radius: 16px;
+    color: #3a7aaa;
+    font-size: 15px;
+    padding: 50px 20px;
+    cursor: pointer;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+  }
+  .add-card:hover { border-color: #60c8f5; color: #60c8f5; }
+  .wave { text-align: center; color: #1e4a6a; font-size: 20px; letter-spacing: 6px; margin: 14px 0; }
+  .lb { background: #0a1e35; border: 1px solid #1e4a6a; border-radius: 14px; padding: 18px; }
+  .lb-title { text-align: center; font-size: 13px; color: #60c8f5; letter-spacing: 2px; margin-bottom: 12px; }
+  .lb-row { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid #1a3a5a; }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-pos { font-size: 14px; width: 28px; color: #5a9ab8; }
+  .lb-fish { font-size: 18px; }
+  .lb-name { flex: 1; font-size: 14px; color: #c0e0f5; }
+  .lb-rank { font-size: 11px; color: #7ab8d8; flex: 1; }
+  .lb-pts { font-size: 14px; color: #60c8f5; font-weight: bold; }
+  @keyframes glow { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 24px #60c8f5} }
+  .glow { animation: glow 0.8s ease; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="app-title">🎣 REEL RANKS</div>
-  <div class="app-sub">∿ ranked fishing tracker ∿</div>
-  <div class="status-bar">
-    <div>
-      <span class="status-dot" id="dot"></span>
-      <span id="status-text" style="color:#5a9ab8">connecting...</span>
-    </div>
-    <span class="save-indicator" id="saved">✓ saved</span>
-    <button class="reset-btn" onclick="resetAll()">reset session</button>
-  </div>
-  <div class="players-grid" id="grid"></div>
-  <div class="wave">〰 〰 〰</div>
-  <div class="leaderboard">
-    <div class="lb-title">⚓ LEADERBOARD</div>
-    <div id="lb"></div>
-  </div>
+ 
+<h1>🎣 REEL RANKS</h1>
+<p class="sub">∿ ranked fishing tracker ∿</p>
+<div class="top-bar">
+  <button class="reset-btn" id="resetBtn">reset session</button>
+</div>
+<div class="grid" id="grid"></div>
+<div class="wave">〰 〰 〰</div>
+<div class="lb">
+  <div class="lb-title">⚓ LEADERBOARD</div>
+  <div id="lb"></div>
 </div>
  
-<script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
 <script>
-const RANKS = [
-  { name:'Unranked', icon:'🪝', color:'#888888', maxSubs:0 },
-  { name:'Bronze',   icon:'🐟', color:'#cd7f32', maxSubs:4 },
-  { name:'Silver',   icon:'🐠', color:'#c0c0c0', maxSubs:4 },
-  { name:'Gold',     icon:'🐡', color:'#ffd700', maxSubs:4 },
-  { name:'Platinum', icon:'🦈', color:'#4dd9e8', maxSubs:2 },
-  { name:'Diamond',  icon:'🐬', color:'#b0e0ff', maxSubs:4 },
-  { name:'Master',   icon:'🐋', color:'#ff9fff', maxSubs:0 },
-  { name:'Legend',   icon:'🦑', color:'#ffd700', maxSubs:0 }
+var RANKS = [
+  { name:'Unranked', icon:'🪝', color:'#aaaaaa', subs:0 },
+  { name:'Bronze',   icon:'🐟', color:'#cd7f32', subs:4 },
+  { name:'Silver',   icon:'🐠', color:'#c0c0c0', subs:4 },
+  { name:'Gold',     icon:'🐡', color:'#ffd700', subs:4 },
+  { name:'Platinum', icon:'🦈', color:'#4dd9e8', subs:2 },
+  { name:'Diamond',  icon:'🐬', color:'#b0e0ff', subs:4 },
+  { name:'Master',   icon:'🐋', color:'#ff9fff', subs:0 },
+  { name:'Legend',   icon:'🦑', color:'#ffd700', subs:0 }
 ];
-const FISH_ICONS = ['🎣','🐟','🐠','🐡','🦈','🐬','🐳','🦑'];
-const ABLY_KEY = 'OESa7g.VStwig:P9b1Ku22vD7FjzYxp-wcEhyPK5uQAnL0a2_FxsWHmnA';
-const CHANNEL_NAME = 'reel-ranks-v1';
-const STORAGE_KEY = 'reel-ranks-v1';
+var FISH = ['🎣','🐟','🐠','🐡','🦈','🐬','🐳','🦑'];
  
-function getRankInfo(pts) {
+function info(pts) {
   if (pts < 0) pts = 0;
-  const tier = Math.min(Math.floor(pts / 100), RANKS.length - 1);
-  const rank = RANKS[tier];
-  const subPts = pts % 100;
-  const sub = rank.maxSubs > 0 ? Math.min(Math.floor(subPts / 25) + 1, rank.maxSubs) : 0;
-  const ptsInSub = subPts % 25;
-  const pct = (ptsInSub / 25) * 100;
-  const label = rank.maxSubs > 0 ? rank.name + ' ' + sub : rank.name;
-  const stars = rank.maxSubs > 0 ? Array.from({length:rank.maxSubs}, (_,i) => i < sub ? '★' : '☆').join('') : '';
-  return { rank, tier, sub, ptsInSub, pct, label, stars };
+  var tier = Math.min(Math.floor(pts / 100), RANKS.length - 1);
+  var r = RANKS[tier];
+  var sp = pts % 100;
+  var sub = r.subs > 0 ? Math.min(Math.floor(sp / 25) + 1, r.subs) : 0;
+  var pip = sp % 25;
+  var pct = (pip / 25) * 100;
+  var label = r.subs > 0 ? r.name + ' ' + sub : r.name;
+  var stars = '';
+  if (r.subs > 0) for (var i = 0; i < r.subs; i++) stars += i < sub ? '★' : '☆';
+  return { r:r, tier:tier, sub:sub, pip:pip, pct:pct, label:label, stars:stars };
 }
  
-// State — shared across all connected clients via Ably
-let players = [
-  { id: 1, name: '', points: 0 },
-  { id: 2, name: '', points: 0 },
-  { id: 3, name: '', points: 0 }
+var players = [
+  {id:1, name:'', pts:0},
+  {id:2, name:'', pts:0},
+  {id:3, name:'', pts:0}
 ];
-let nextId = 4;
-let channel = null;
-let isMine = false; // true while we're publishing so we don't echo our own message
+var nid = 4;
  
-function flashSaved() {
-  const el = document.getElementById('saved');
-  el.classList.add('show');
-  clearTimeout(flashSaved._t);
-  flashSaved._t = setTimeout(() => el.classList.remove('show'), 1800);
+function save() {
+  try { localStorage.setItem('rr', JSON.stringify({players:players, nid:nid})); } catch(e) {}
 }
  
-// Push state to ALL connected clients
-function publish() {
-  if (!channel) return;
-  isMine = true;
-  channel.publish('state', { players, nextId }, () => {
-    setTimeout(() => { isMine = false; }, 200);
-  });
-  flashSaved();
+function load() {
+  try {
+    var d = JSON.parse(localStorage.getItem('rr'));
+    if (d && d.players && d.players.length) { players = d.players; nid = d.nid || 4; }
+  } catch(e) {}
 }
  
-function addPoints(id, delta) {
-  const p = players.find(x => x.id === id);
-  if (!p) return;
-  const prevTier = getRankInfo(p.points).tier;
-  p.points = Math.max(0, p.points + delta);
-  const newTier = getRankInfo(p.points).tier;
-  publish();
-  render();
-  if (newTier !== prevTier) {
-    const card = document.querySelector('[data-id="' + id + '"]');
-    if (card) { card.classList.add('rank-up'); setTimeout(() => card.classList.remove('rank-up'), 800); }
+function add(id, delta) {
+  for (var i = 0; i < players.length; i++) {
+    if (players[i].id === id) {
+      var prev = info(players[i].pts).tier;
+      players[i].pts = Math.max(0, players[i].pts + delta);
+      var next = info(players[i].pts).tier;
+      save();
+      render();
+      if (prev !== next) {
+        var c = document.querySelector('[data-id="' + id + '"]');
+        if (c) { c.classList.add('glow'); setTimeout(function(){ c.classList.remove('glow'); }, 800); }
+      }
+      return;
+    }
   }
 }
  
 function setExact(id) {
-  const inp = document.getElementById('ex-' + id);
-  const val = parseInt(inp.value);
-  if (isNaN(val)) return;
-  const p = players.find(x => x.id === id);
-  if (!p) return;
-  p.points = Math.max(0, val);
+  var inp = document.getElementById('ex' + id);
+  var v = parseInt(inp.value);
+  if (isNaN(v)) return;
+  for (var i = 0; i < players.length; i++) {
+    if (players[i].id === id) { players[i].pts = Math.max(0, v); break; }
+  }
   inp.value = '';
-  publish();
+  save();
   render();
 }
  
-function removePlayer(id) {
-  players = players.filter(x => x.id !== id);
-  publish();
+function del(id) {
+  players = players.filter(function(p){ return p.id !== id; });
+  save();
   render();
 }
  
-function resetAll() {
-  if (!confirm('Reset all scores and names for EVERYONE? This cannot be undone.')) return;
-  players = [
-    { id: 1, name: '', points: 0 },
-    { id: 2, name: '', points: 0 },
-    { id: 3, name: '', points: 0 }
-  ];
-  nextId = 4;
-  publish();
+function reset() {
+  if (!confirm('Reset all scores and names?')) return;
+  players = [{id:1,name:'',pts:0},{id:2,name:'',pts:0},{id:3,name:'',pts:0}];
+  nid = 4;
+  save();
   render();
 }
+ 
+document.getElementById('resetBtn').onclick = reset;
  
 function render() {
-  const grid = document.getElementById('grid');
-  const focusId = document.activeElement ? document.activeElement.getAttribute('data-id') : null;
+  var grid = document.getElementById('grid');
   grid.innerHTML = '';
  
-  players.forEach((p, idx) => {
-    const { rank, ptsInSub, pct, label, stars } = getRankInfo(p.points);
-    const fish = FISH_ICONS[idx % FISH_ICONS.length];
-    const card = document.createElement('div');
-    card.className = 'player-card';
-    card.setAttribute('data-id', p.id);
-    card.innerHTML = `
-      <button class="remove-btn" onclick="removePlayer(${p.id})">✕</button>
-      <div class="player-header">
-        <span class="fish-anim">${fish}</span>
-        <input class="player-name-input" placeholder="Enter angler name…" value="${p.name.replace(/"/g,'&quot;')}" data-id="${p.id}" />
-      </div>
-      <div class="rank-badge">
-        <span class="rank-icon">${rank.icon}</span>
-        <div class="rank-tier" style="color:${rank.color}">${label}</div>
-        ${stars ? '<div class="rank-stars">' + stars + '</div>' : ''}
-      </div>
-      <div class="points-display">${p.points}</div>
-      <div class="points-sub">TOTAL POINTS</div>
-      <div class="progress-section">
-        <div class="progress-label"><span>sub-rank progress</span><span>${ptsInSub}/25</span></div>
-        <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%;background:${rank.color}"></div></div>
-      </div>
-      <div class="controls">
-        <button class="pts-btn" onclick="addPoints(${p.id}, 1)">+1 pt</button>
-        <button class="pts-btn minus" onclick="addPoints(${p.id}, -1)">−1 pt</button>
-        <button class="pts-btn" onclick="addPoints(${p.id}, 5)">+5 pts</button>
-        <button class="pts-btn minus" onclick="addPoints(${p.id}, -5)">−5 pts</button>
-        <button class="pts-btn" onclick="addPoints(${p.id}, 10)">+10 pts</button>
-        <button class="pts-btn minus" onclick="addPoints(${p.id}, -10)">−10 pts</button>
-        <button class="pts-btn" onclick="addPoints(${p.id}, 25)">+25 pts</button>
-        <button class="pts-btn minus" onclick="addPoints(${p.id}, -25)">−25 pts</button>
-        <button class="pts-btn wide" onclick="addPoints(${p.id}, 100)">+100 pts 🐠</button>
-      </div>
-      <div class="manual-row">
-        <input class="manual-input" id="ex-${p.id}" type="number" placeholder="Set exact points…" />
-        <button class="manual-btn" onclick="setExact(${p.id})">Set</button>
-      </div>
-    `;
-    grid.appendChild(card);
-  });
+  for (var i = 0; i < players.length; i++) {
+    (function(p, idx) {
+      var v = info(p.pts);
+      var card = document.createElement('div');
+      card.className = 'card';
+      card.setAttribute('data-id', p.id);
  
-  if (players.length < 6) {
-    const btn = document.createElement('button');
-    btn.className = 'add-card';
-    btn.innerHTML = '<span class="add-fish">🎣</span>add angler';
-    btn.onclick = () => {
-      players.push({ id: nextId++, name: '', points: 0 });
-      publish();
-      render();
-    };
-    grid.appendChild(btn);
+      // delete button
+      var db = document.createElement('button');
+      db.className = 'del-btn';
+      db.textContent = '✕';
+      db.setAttribute('data-del', p.id);
+      card.appendChild(db);
+ 
+      // header
+      var hdr = document.createElement('div');
+      hdr.className = 'card-header';
+      var fi = document.createElement('span');
+      fi.className = 'fish';
+      fi.textContent = FISH[idx % FISH.length];
+      hdr.appendChild(fi);
+      var ni = document.createElement('input');
+      ni.className = 'name-input';
+      ni.placeholder = 'Enter angler name…';
+      ni.value = p.name;
+      ni.setAttribute('data-nameid', p.id);
+      hdr.appendChild(ni);
+      card.appendChild(hdr);
+ 
+      // rank area
+      var ra = document.createElement('div');
+      ra.className = 'rank-area';
+      ra.innerHTML = '<span class="rank-emoji">' + v.r.icon + '</span>' +
+        '<div class="rank-name" style="color:' + v.r.color + '">' + v.label + '</div>' +
+        (v.stars ? '<div class="rank-stars">' + v.stars + '</div>' : '');
+      card.appendChild(ra);
+ 
+      // points
+      var pn = document.createElement('div');
+      pn.className = 'pts-number';
+      pn.textContent = p.pts;
+      card.appendChild(pn);
+      var pl = document.createElement('div');
+      pl.className = 'pts-label';
+      pl.textContent = 'TOTAL POINTS';
+      card.appendChild(pl);
+ 
+      // progress
+      var plbl = document.createElement('div');
+      plbl.className = 'prog-label';
+      plbl.innerHTML = '<span>sub-rank progress</span><span>' + v.pip + '/25</span>';
+      card.appendChild(plbl);
+      var pbg = document.createElement('div');
+      pbg.className = 'prog-bg';
+      var pf = document.createElement('div');
+      pf.className = 'prog-fill';
+      pf.style.width = v.pct + '%';
+      pf.style.background = v.r.color;
+      pbg.appendChild(pf);
+      card.appendChild(pbg);
+ 
+      // buttons
+      var bg = document.createElement('div');
+      bg.className = 'btn-grid';
+      var btns = [
+        ['+1 pt', 1, ''], ['−1 pt', -1, 'red'],
+        ['+5 pts', 5, ''], ['−5 pts', -5, 'red'],
+        ['+10 pts', 10, ''], ['−10 pts', -10, 'red'],
+        ['+25 pts', 25, ''], ['−25 pts', -25, 'red'],
+        ['+100 pts 🐠', 100, 'wide']
+      ];
+      btns.forEach(function(b) {
+        var btn = document.createElement('button');
+        btn.className = 'btn ' + b[2];
+        btn.textContent = b[0];
+        btn.setAttribute('data-pid', p.id);
+        btn.setAttribute('data-delta', b[1]);
+        bg.appendChild(btn);
+      });
+      card.appendChild(bg);
+ 
+      // exact row
+      var er = document.createElement('div');
+      er.className = 'exact-row';
+      var ei = document.createElement('input');
+      ei.className = 'exact-input';
+      ei.id = 'ex' + p.id;
+      ei.type = 'number';
+      ei.placeholder = 'Set exact points…';
+      var eb = document.createElement('button');
+      eb.className = 'exact-btn';
+      eb.textContent = 'Set';
+      eb.setAttribute('data-setid', p.id);
+      er.appendChild(ei);
+      er.appendChild(eb);
+      card.appendChild(er);
+ 
+      grid.appendChild(card);
+    })(players[i], i);
   }
  
-  document.querySelectorAll('.player-name-input').forEach(inp => {
-    if (inp.getAttribute('data-id') === focusId) inp.focus();
-    inp.addEventListener('input', e => {
-      const p = players.find(x => x.id === parseInt(e.target.getAttribute('data-id')));
-      if (p) { p.name = e.target.value; publish(); renderLB(); }
-    });
-  });
+  // add angler button
+  if (players.length < 6) {
+    var ab = document.createElement('button');
+    ab.className = 'add-card';
+    ab.innerHTML = '<span style="font-size:30px">🎣</span><span>add angler</span>';
+    ab.id = 'addBtn';
+    grid.appendChild(ab);
+  }
  
   renderLB();
 }
  
+// Single delegated event listener on the grid
+document.getElementById('grid').addEventListener('click', function(e) {
+  var t = e.target;
+ 
+  // point buttons
+  if (t.hasAttribute('data-delta')) {
+    add(parseInt(t.getAttribute('data-pid')), parseInt(t.getAttribute('data-delta')));
+    return;
+  }
+  // set exact
+  if (t.hasAttribute('data-setid')) {
+    setExact(parseInt(t.getAttribute('data-setid')));
+    return;
+  }
+  // delete player
+  if (t.hasAttribute('data-del')) {
+    del(parseInt(t.getAttribute('data-del')));
+    return;
+  }
+  // add angler
+  if (t.id === 'addBtn' || t.parentElement.id === 'addBtn') {
+    players.push({id:nid++, name:'', pts:0});
+    save();
+    render();
+    return;
+  }
+});
+ 
+// name input delegation
+document.getElementById('grid').addEventListener('input', function(e) {
+  var t = e.target;
+  if (t.hasAttribute('data-nameid')) {
+    var id = parseInt(t.getAttribute('data-nameid'));
+    for (var i = 0; i < players.length; i++) {
+      if (players[i].id === id) { players[i].name = t.value; break; }
+    }
+    save();
+    renderLB();
+  }
+});
+ 
 function renderLB() {
-  const sorted = [...players].sort((a, b) => b.points - a.points);
-  const medals = ['🥇','🥈','🥉'];
-  document.getElementById('lb').innerHTML = sorted.map((p, i) => {
-    const { label, rank } = getRankInfo(p.points);
-    const fi = players.findIndex(x => x.id === p.id);
-    return `<div class="lb-row">
-      <div class="lb-pos">${i < 3 ? medals[i] : i + 1}</div>
-      <div class="lb-fish">${FISH_ICONS[fi % FISH_ICONS.length]}</div>
-      <div class="lb-name">${p.name || 'Angler ' + p.id}</div>
-      <div class="lb-rank">${label} ${rank.icon}</div>
-      <div class="lb-pts">${p.points}pts</div>
-    </div>`;
-  }).join('');
+  var sorted = players.slice().sort(function(a,b){ return b.pts - a.pts; });
+  var medals = ['🥇','🥈','🥉'];
+  var html = '';
+  for (var i = 0; i < sorted.length; i++) {
+    var p = sorted[i];
+    var v = info(p.pts);
+    var fi = 0;
+    for (var j = 0; j < players.length; j++) { if (players[j].id === p.id) { fi = j; break; } }
+    html += '<div class="lb-row">' +
+      '<div class="lb-pos">' + (i < 3 ? medals[i] : i+1) + '</div>' +
+      '<div class="lb-fish">' + FISH[fi % FISH.length] + '</div>' +
+      '<div class="lb-name">' + (p.name || 'Angler ' + p.id) + '</div>' +
+      '<div class="lb-rank">' + v.label + ' ' + v.r.icon + '</div>' +
+      '<div class="lb-pts">' + p.pts + 'pts</div>' +
+      '</div>';
+  }
+  document.getElementById('lb').innerHTML = html;
 }
  
-// --- Ably setup ---
-const ably = new Ably.Realtime({ key: ABLY_KEY });
- 
-ably.connection.on('connected', () => {
-  document.getElementById('dot').className = 'status-dot connected';
-  document.getElementById('status-text').textContent = 'live — all changes sync instantly';
-});
- 
-ably.connection.on('disconnected', () => {
-  document.getElementById('dot').className = 'status-dot';
-  document.getElementById('status-text').textContent = 'reconnecting...';
-});
- 
-ably.connection.on('failed', () => {
-  document.getElementById('status-text').textContent = 'connection failed — check internet';
-});
- 
-channel = ably.channels.get(CHANNEL_NAME);
- 
-// When someone joins, fetch the last known state from history
-channel.attach(() => {
-  channel.history({ limit: 1 }, (err, page) => {
-    if (!err && page.items.length > 0) {
-      const d = page.items[0].data;
-      if (d && d.players && d.players.length > 0) {
-        players = d.players;
-        nextId = d.nextId || (Math.max(...players.map(p => p.id)) + 1);
-      }
-    }
-    render();
-  });
-});
- 
-// Listen for live updates from anyone
-channel.subscribe('state', msg => {
-  if (isMine) return; // ignore our own echoes
-  players = msg.data.players;
-  nextId = msg.data.nextId;
-  render();
-});
- 
+load();
 render();
 </script>
 </body>

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,12 +13,8 @@ body::before { content: ''; position: fixed; inset: 0; background: radial-gradie
 .wrap { max-width: 980px; margin: 0 auto; position: relative; z-index: 1; }
 .app-title { font-family: 'Orbitron', monospace; text-align: center; font-size: 26px; color: #60c8f5; letter-spacing: 4px; margin-bottom: 4px; }
 .app-sub { text-align: center; font-size: 12px; color: #5a9ab8; letter-spacing: 2px; margin-bottom: 0.4rem; }
-.status-bar { text-align: center; font-size: 11px; margin-bottom: 1.4rem; display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap; }
-.status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #555; margin-right: 5px; vertical-align: middle; transition: background 0.3s; }
-.status-dot.connected { background: #3dcf8c; box-shadow: 0 0 6px #3dcf8c; }
-.save-indicator { font-size: 11px; color: #3dcf8c; opacity: 0; transition: opacity 0.4s; }
-.save-indicator.show { opacity: 1; }
-.reset-btn { font-size: 11px; background: transparent; border: 1px solid #3a2a1a; color: #8a5a3a; border-radius: 6px; padding: 3px 10px; cursor: pointer; font-family: 'Exo 2', sans-serif; transition: all 0.15s; }
+.top-bar { text-align: center; margin-bottom: 1.4rem; }
+.reset-btn { font-size: 11px; background: transparent; border: 1px solid #3a2a1a; color: #8a5a3a; border-radius: 6px; padding: 4px 12px; cursor: pointer; font-family: 'Exo 2', sans-serif; transition: all 0.15s; }
 .reset-btn:hover { border-color: #f09060; color: #f09060; }
 .players-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1.4rem; }
 .player-card { background: linear-gradient(160deg, #0a2a4a 0%, #0d1f35 100%); border: 1.5px solid #1e5a8a; border-radius: 16px; padding: 1.2rem; position: relative; }
@@ -74,12 +69,7 @@ body::before { content: ''; position: fixed; inset: 0; background: radial-gradie
 <div class="wrap">
   <div class="app-title">🎣 REEL RANKS</div>
   <div class="app-sub">∿ ranked fishing tracker ∿</div>
-  <div class="status-bar">
-    <div>
-      <span class="status-dot" id="dot"></span>
-      <span id="status-text" style="color:#5a9ab8">connecting...</span>
-    </div>
-    <span class="save-indicator" id="saved">✓ saved</span>
+  <div class="top-bar">
     <button class="reset-btn" onclick="resetAll()">reset session</button>
   </div>
   <div class="players-grid" id="grid"></div>
@@ -90,7 +80,6 @@ body::before { content: ''; position: fixed; inset: 0; background: radial-gradie
   </div>
 </div>
  
-<script src="https://cdn.ably.com/lib/ably.min-2.js"></script>
 <script>
 const RANKS = [
   { name:'Unranked', icon:'🪝', color:'#888888', maxSubs:0 },
@@ -103,9 +92,6 @@ const RANKS = [
   { name:'Legend',   icon:'🦑', color:'#ffd700', maxSubs:0 }
 ];
 const FISH_ICONS = ['🎣','🐟','🐠','🐡','🦈','🐬','🐳','🦑'];
-const ABLY_KEY = 'OESa7g.VStwig:P9b1Ku22vD7FjzYxp-wcEhyPK5uQAnL0a2_FxsWHmnA';
-const CHANNEL_NAME = 'reel-ranks-v1';
-const STORAGE_KEY = 'reel-ranks-v1';
  
 function getRankInfo(pts) {
   if (pts < 0) pts = 0;
@@ -120,31 +106,30 @@ function getRankInfo(pts) {
   return { rank, tier, sub, ptsInSub, pct, label, stars };
 }
  
-// State — shared across all connected clients via Ably
 let players = [
   { id: 1, name: '', points: 0 },
   { id: 2, name: '', points: 0 },
   { id: 3, name: '', points: 0 }
 ];
 let nextId = 4;
-let channel = null;
-let isMine = false; // true while we're publishing so we don't echo our own message
  
-function flashSaved() {
-  const el = document.getElementById('saved');
-  el.classList.add('show');
-  clearTimeout(flashSaved._t);
-  flashSaved._t = setTimeout(() => el.classList.remove('show'), 1800);
+function save() {
+  try { localStorage.setItem('reel-ranks', JSON.stringify({ players, nextId })); } catch(e) {}
 }
  
-// Push state to ALL connected clients
-function publish() {
-  if (!channel) return;
-  isMine = true;
-  channel.publish('state', { players, nextId }, () => {
-    setTimeout(() => { isMine = false; }, 200);
-  });
-  flashSaved();
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem('reel-ranks'));
+    if (d && d.players && d.players.length) { players = d.players; nextId = d.nextId || 4; }
+  } catch(e) {}
+}
+ 
+function resetAll() {
+  if (!confirm('Reset all scores and names?')) return;
+  players = [{ id:1,name:'',points:0 },{ id:2,name:'',points:0 },{ id:3,name:'',points:0 }];
+  nextId = 4;
+  save();
+  render();
 }
  
 function addPoints(id, delta) {
@@ -152,10 +137,9 @@ function addPoints(id, delta) {
   if (!p) return;
   const prevTier = getRankInfo(p.points).tier;
   p.points = Math.max(0, p.points + delta);
-  const newTier = getRankInfo(p.points).tier;
-  publish();
+  save();
   render();
-  if (newTier !== prevTier) {
+  if (getRankInfo(p.points).tier !== prevTier) {
     const card = document.querySelector('[data-id="' + id + '"]');
     if (card) { card.classList.add('rank-up'); setTimeout(() => card.classList.remove('rank-up'), 800); }
   }
@@ -169,25 +153,13 @@ function setExact(id) {
   if (!p) return;
   p.points = Math.max(0, val);
   inp.value = '';
-  publish();
+  save();
   render();
 }
  
 function removePlayer(id) {
   players = players.filter(x => x.id !== id);
-  publish();
-  render();
-}
- 
-function resetAll() {
-  if (!confirm('Reset all scores and names for EVERYONE? This cannot be undone.')) return;
-  players = [
-    { id: 1, name: '', points: 0 },
-    { id: 2, name: '', points: 0 },
-    { id: 3, name: '', points: 0 }
-  ];
-  nextId = 4;
-  publish();
+  save();
   render();
 }
  
@@ -242,11 +214,7 @@ function render() {
     const btn = document.createElement('button');
     btn.className = 'add-card';
     btn.innerHTML = '<span class="add-fish">🎣</span>add angler';
-    btn.onclick = () => {
-      players.push({ id: nextId++, name: '', points: 0 });
-      publish();
-      render();
-    };
+    btn.onclick = () => { players.push({ id: nextId++, name: '', points: 0 }); save(); render(); };
     grid.appendChild(btn);
   }
  
@@ -254,7 +222,7 @@ function render() {
     if (inp.getAttribute('data-id') === focusId) inp.focus();
     inp.addEventListener('input', e => {
       const p = players.find(x => x.id === parseInt(e.target.getAttribute('data-id')));
-      if (p) { p.name = e.target.value; publish(); renderLB(); }
+      if (p) { p.name = e.target.value; save(); renderLB(); }
     });
   });
  
@@ -277,47 +245,7 @@ function renderLB() {
   }).join('');
 }
  
-// --- Ably setup ---
-const ably = new Ably.Realtime({ key: ABLY_KEY });
- 
-ably.connection.on('connected', () => {
-  document.getElementById('dot').className = 'status-dot connected';
-  document.getElementById('status-text').textContent = 'live — all changes sync instantly';
-});
- 
-ably.connection.on('disconnected', () => {
-  document.getElementById('dot').className = 'status-dot';
-  document.getElementById('status-text').textContent = 'reconnecting...';
-});
- 
-ably.connection.on('failed', () => {
-  document.getElementById('status-text').textContent = 'connection failed — check internet';
-});
- 
-channel = ably.channels.get(CHANNEL_NAME);
- 
-// When someone joins, fetch the last known state from history
-channel.attach(() => {
-  channel.history({ limit: 1 }, (err, page) => {
-    if (!err && page.items.length > 0) {
-      const d = page.items[0].data;
-      if (d && d.players && d.players.length > 0) {
-        players = d.players;
-        nextId = d.nextId || (Math.max(...players.map(p => p.id)) + 1);
-      }
-    }
-    render();
-  });
-});
- 
-// Listen for live updates from anyone
-channel.subscribe('state', msg => {
-  if (isMine) return; // ignore our own echoes
-  players = msg.data.players;
-  nextId = msg.data.nextId;
-  render();
-});
- 
+load();
 render();
 </script>
 </body>
